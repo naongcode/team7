@@ -8,17 +8,15 @@ direction = input().split()
 #벌목한 횟수를 저장할 변수
 amount = 0
 
+growth = 0
 for i in range(Q):
-    #벌목 할 수 있는 조건 충족(min_height보다 크거나 같을 때)
-	if (tree[location] >= min_height):
-		# 벌목하기
-		amount+=tree[location]
-		tree[location] = 0
-	#이동하기
-	if (direction[i] == 'R'):
-		location = (location + 1) % length
-	elif (direction[i] == 'L'):
-		location = (location-1) % length
-	# 자라기
-	tree+=1
+    if (tree[location] + growth >= min_height):
+        amount += tree[location] + growth
+        tree[location] = -growth  # 벌목한 나무는 현재 성장을 기준으로 초기화
+    if direction[i] == 'R':
+        location = (location + 1) % length
+    elif direction[i] == 'L':
+        location = (location - 1) % length
+    growth += 1
+	
 print(amount)
