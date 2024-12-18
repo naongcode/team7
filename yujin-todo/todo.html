@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="todo.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>TODO 앱</h3>
+            <button id="add-todo">새로운 todo 추가하기</h5>
+        </div>
+        <div class="state-bar">
+            <span>▼ 진행중</span>
+            <span>▼ 완료</span>
+            <div class="filter">
+                <select class="select option" id="view">
+                    <option value="title">가나다순</option>
+                    <option value="date">날짜순</option>
+                    <option value="rating">중요도순</option>
+                </select>
+                <select class="select sort" id="sort">
+                    <option value="1">오름차순</option>
+                    <option value="-1">내림차순</option>
+                </select>
+            </div>
+        </div>
+        <div class="todo-list" id="todo-list">
+            <div class="ing" id="ing">
+
+            </div>
+            <div class="completed"id="completed">
+
+            </div>
+        </div>
+    </div>
+    <script src="todo.js"></script>
+</body>
+</html>
+
+<!-- 시작 전, 진행 중, 완료 구분 -->
