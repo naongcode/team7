@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="lko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODOLIST</title>
+    <style>
+        body{
+            font-family : Arial, sans-serif;
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width:400px;
+            min-height: 300px;
+            background:white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1{
+            text-align: center;
+            margin: 0;
+        }
+        .todo-input {
+            display:flex;
+            gap:5px;
+            justify-content: space-between;
+        }
+        .todo-input input {
+            flex: 1;
+            padding: 10px;
+            border:1px solid #ccc;
+            border-radius: 4px;
+        }
+        .todo-input button {
+            padding: 10px;
+            background-color: #28a745;
+            color:white;
+            border:none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .todo-list{
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            text-align: left;
+            justify-content: space-between;
+        }
+        .todo-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .todo-item button{
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TODO LIST</h1>
+        <input type="text" id="todo" placeholder="할 일을 입력하세요">
+        <div class="todo-input">
+            <button id="add-button">추가</button>
+        </div>
+        <div class="filters">
+            <select id="filter">
+                <option value="all">전체</option>
+                <option value="completed">완료</option>
+                <option value="in-progress">진행 중</option>
+            </select>
+            <select id="sort">
+                <option value="date">날짜순</option>
+                <option value="priority">중요도순</option>
+            </select>
+        </div>
+        <div class="todo-list" id="todoList"></div>
+    </div>
+    <script>
+        const addButton = document.querySelector("#add-button");
+        const todoList = document.getElementById("todoList");
+        const filterSelect = document.getElementById("filter");
+        const sortSelect = document.getElementById("sort");
+
+        addButton.onclick = addTodo;
+
+        // 로컬스토리지 사용
+        window.onload = loadTodos;
+
+        // 할 일 추가
+        function addTodo() {
+            const todoInput = document.getElementById("todo");
+            const todoText = todoInput.value;
+            if(todoText) {
+                const todoItem = document.createElement("div");
+                todoItem.className = "todo-item";
+                todoItem.textContent = todoText;
+
+                // 체크박스 추가
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.onclick = function() {
+                    toggleStatus(todoItem, checkbox.checked);
+                };
+                todoItem.prepend(checkbox);
+
+                // 상태에 맞게 텍스트 처리
+                const status = document.createElement("span");
+                status.className = "status";
+                status.textContent = "진행 중";
+                todoItem.appendChild(status);
+
+                // 수정 및 삭제 버튼 추가
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "삭제";
+                deleteButton.onclick = function() {
+                    deleteTodo(todoItem, todoText);
+                };
+
+                todoItem.appendChild(deleteButton);
+
+                // 새 할 일 로컬스토리지에 저장
+                saveTodoToLocalStorage(todoText, checkbox.checked, "medium", new Date().toISOString());
+                todoInput.value = "";
+                todoList.appendChild(todoItem);
+            }
+        }
+
+        // 할 일 삭제
+        function deleteTodo(todoItem, todoText) {
+            todoList.removeChild(todoItem);
+            removeTodoFromLocalStorage(todoText);
+        }
+
+        // 로컬스토리지에 할 일 저장
+        function saveTodoToLocalStorage(todoText, completed, priority, date) {
+            let todos = JSON.parse(localStorage.getItem("todos")) || [];
+            todos.push({text: todoText, completed: completed, priority: priority, date: date});
+            localStorage.setItem("todos", JSON.stringify(todos));
+        }
+
+        // 로컬스토리지에서 할 일 불러오기
+        function loadTodos() {
+            let todos = JSON.parse(localStorage.getItem("todos")) || [];
+            todos.forEach(todo => {
+                const todoItem = document.createElement("div");
+                todoItem.className = "todo-item";
+                const todoText = document.createElement("span");
+                todoText.textContent = todo.text;
+                todoItem.appendChild(todoText);
+
+                // 체크박스 추가
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = todo.completed;
+                checkbox.onclick = function() {
+                    toggleStatus(todoItem, checkbox.checked);
+                };
+                todoItem.prepend(checkbox);
+
+                // 상태 표시
+                const status = document.createElement("span");
+                status.className = "status";
+                status.textContent = todo.completed ? "완료" : "진행 중";
+                todoItem.appendChild(status);
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "삭제";
+                deleteButton.onclick = function() {
+                    deleteTodo(todoItem, todo.text);
+                };
+
+                // 수정 기능 추가: 클릭 시 텍스트 입력란으로 변환
+                todoText.onclick = function() {
+                    const inputField = document.createElement("input");
+                    inputField.type = "text";
+                    inputField.value = todoText.textContent;
+
+                    // Enter 키를 누르면 텍스트 수정 반영
+                    inputField.addEventListener("keydown", function(e) {
+                        if (e.key === "Enter") {
+                            todoText.textContent = inputField.value;
+                            saveUpdatedTodo(todoItem, todo.text, inputField.value);
+                            todoItem.replaceChild(todoText, inputField);
+                        }
+                    });
+
+                    inputField.onblur = function() {
+                        todoText.textContent = inputField.value;
+                        saveUpdatedTodo(todoItem, todo.text, inputField.value);
+                        todoItem.replaceChild(todoText, inputField);
+                    };
+
+                    todoItem.replaceChild(inputField, todoText);
+                    inputField.focus();
+                };
+
+                todoItem.appendChild(deleteButton);
+                todoList.appendChild(todoItem);
+            });
+
+            // 필터링과 정렬 처리
+            filterSelect.addEventListener("change", filterTodos);
+            sortSelect.addEventListener("change", sortTodos);
+        }
+
+        // 수정된 내용 저장
+        function saveUpdatedTodo(todoItem, oldText, newText) {
+            let todos = JSON.parse(localStorage.getItem("todos")) || [];
+            todos = todos.map(todo => {
+                if (todo.text === oldText) {
+                    todo.text = newText;
+                    todo.date = new Date().toISOString(); // 수정 날짜 업데이트
+                }
+                return todo;
+            });
+            localStorage.setItem("todos", JSON.stringify(todos));
+        }
+
+        // 체크박스를 클릭하여 완료 상태 변경
+        function toggleStatus(todoItem, completed) {
+            const todoText = todoItem.querySelector("span").textContent;
+            let todos = JSON.parse(localStorage.getItem("todos")) || [];
+            todos = todos.map(todo => {
+                if (todo.text === todoText) {
+                    todo.completed = completed;
+                }
+                return todo;
+            });
+            localStorage.setItem("todos", JSON.stringify(todos));
+
+            const status = todoItem.querySelector(".status");
+            status.textContent = completed ? "완료" : "진행 중";
+        }
+
+        // 필터링 기능 (완료, 진행 중, 전체)
+        function filterTodos() {
+            const todos = document.querySelectorAll(".todo-item");
+            const filterValue = filterSelect.value;
+            todos.forEach(todo => {
+                const status = todo.querySelector(".status").textContent;
+                if (filterValue === "all" || (filterValue === "completed" && status === "완료") || (filterValue === "in-progress" && status === "진행 중")) {
+                    todo.style.display = "flex";
+                } else {
+                    todo.style.display = "none";
+                }
+            });
+        }
+
+        // 정렬 기능 (날짜순, 중요도순)
+        function sortTodos() {
+            const todos = Array.from(document.querySelectorAll(".todo-item"));
+            const sortValue = sortSelect.value;
+
+            // 날짜순 정렬
+            if (sortValue === "date") {
+                todos.sort((a, b) => {
+                    const dateA = new Date(a.querySelector(".status").textContent);
+                    const dateB = new Date(b.querySelector(".status").textContent);
+                    return dateA - dateB;
+                });
+            }
+
+            // 중요도순 정렬 (우선순위가 high > medium > low로 정렬)
+            if (sortValue === "priority") {
+                todos.sort((a, b) => {
+                    const priorityA = a.querySelector(".status").textContent.toLowerCase();
+                    const priorityB = b.querySelector(".status").textContent.toLowerCase();
+                    const priorityOrder = ["low", "medium", "high"];
+                    return priorityOrder.indexOf(priorityA) - priorityOrder.indexOf(priorityB);
+                });
+            }
+
+            // 정렬된 할 일들 표시
+            todos.forEach(todo => {
+                todoList.appendChild(todo);
+            });
+        }
+    </script>
+</body>
+</html>
